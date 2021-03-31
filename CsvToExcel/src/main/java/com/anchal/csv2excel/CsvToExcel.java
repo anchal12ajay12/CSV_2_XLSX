@@ -23,62 +23,43 @@ public class CsvToExcel {
     public static final String FILE_NAME = "EXCEL_DATA";
  
  
-    public static String convertCsvToXlsx(String xlsFileLocation, String csvFilePath) {
+    public static String convertCsvToXlsx(String xlsFileLocation, String csvFilePath) throws Exception {
         SXSSFSheet sheet = null;
-        CSVReader reader = null;
-        Workbook workBook = null;
-        CSVParser csvParser = null;
-        String generatedXlsFilePath = "";
-        FileOutputStream fileOutputStream = null;
+        
+        String generatedXlsFilePath = xlsFileLocation + FILE_NAME + FILE_EXTN;
+        
+        CSVParser csvParser = new CSVParserBuilder().withSeparator(FILE_DELIMITER).build();
  
-        try {
- 
-            /**** Get the CSVReader Instance & Specify The Delimiter To Be Used ****/
-            String[] nextLine;
-    
-            csvParser = new CSVParserBuilder().withSeparator(FILE_DELIMITER).build();
+        try(CSVReader reader = new CSVReaderBuilder(new FileReader(csvFilePath)).withCSVParser(csvParser).build();
+        		Workbook workBook = new SXSSFWorkbook();
+        		FileOutputStream fileOutputStream = new FileOutputStream(generatedXlsFilePath.trim());
+        		) {
 
-            reader = new CSVReaderBuilder(new FileReader(csvFilePath)).withCSVParser(csvParser).build();
-            
-            workBook = new SXSSFWorkbook();
-            sheet = (SXSSFSheet) workBook.createSheet("Sheet");
- 
-            int rowNum = 0;
-            System.out.println("Creating New .Xlsx File From The Already Generated .Csv File");
-            while((nextLine = reader.readNext()) != null) {
-                Row currentRow = sheet.createRow(rowNum++);
-                for(int i=0; i < nextLine.length; i++) {
-                    if(NumberUtils.isDigits(nextLine[i])) {
-                        currentRow.createCell(i).setCellValue(Integer.parseInt(nextLine[i]));
-                    } else if (NumberUtils.isNumber(nextLine[i])) {
-                        currentRow.createCell(i).setCellValue(Double.parseDouble(nextLine[i]));
-                    } else {
-                        currentRow.createCell(i).setCellValue(nextLine[i]);
-                    }
-                }
-            }
- 
-            generatedXlsFilePath = xlsFileLocation + FILE_NAME + FILE_EXTN;
-            System.out.println("The File Is Generated At The Following Location?= " + generatedXlsFilePath);
- 
-            fileOutputStream = new FileOutputStream(generatedXlsFilePath.trim());
-            workBook.write(fileOutputStream);
-        } catch(Exception exObj) {
-        	System.out.println("Error: Exception In convertCsvToXls() Method?=  " + exObj);
-        } finally {         
-            try {
- 
-                /**** Closing The Excel Workbook Object ****/
-                workBook.close();
- 
-                /**** Closing The File-Writer Object ****/
-                fileOutputStream.close();
- 
-                /**** Closing The CSV File-ReaderObject ****/
-                reader.close();
-            } catch (IOException ioExObj) {
-            	System.out.println("Error: Exception While Closing I/O Objects In convertCsvToXls() Method?=  " + ioExObj);          
-            }
+		            String[] nextLine;
+		
+		            sheet  = (SXSSFSheet) workBook.createSheet("Sheet");
+		 
+		            int rowNum = 0;
+		            System.out.println("Creating New .Xlsx File From The Already Generated .Csv File");
+		            while((nextLine = reader.readNext()) != null) {
+		                Row currentRow = sheet.createRow(rowNum++);
+		                for(int i=0; i < nextLine.length; i++) {
+		                    if(NumberUtils.isDigits(nextLine[i])) {
+		                        currentRow.createCell(i).setCellValue(Integer.parseInt(nextLine[i]));
+		                    } else if (NumberUtils.isNumber(nextLine[i])) {
+		                        currentRow.createCell(i).setCellValue(Double.parseDouble(nextLine[i]));
+		                    } else {
+		                        currentRow.createCell(i).setCellValue(nextLine[i]);
+		                    }
+		                }
+		            }
+		    
+		            System.out.println("The File Is Generated At The Following Location:= " + generatedXlsFilePath);	 
+		            
+		            workBook.write(fileOutputStream);
+		            
+        }catch(Exception e) {
+        	throw e;
         }
  
         return generatedXlsFilePath;
